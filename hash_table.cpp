@@ -6,28 +6,13 @@
 
 using namespace std;
 
-typedef enum { False, True } boolean;
 
-// Task data type
-struct task
-{
-    // Inputs
-    uint64_t key;
-    uint32_t estimated_time;
-    time_t date_begin;
-    time_t date_due;
-    uint8_t priority;
-    char subtasks;
-    boolean overdue;
-    boolean finished;
-    uint64_t uuid;
-};
-
-// Declaring task data type
-typedef struct task task_t;
-
-
-// Hash node class template
+/* 
+Hash node class:
+	Uses a template with two custom datatypes, K for key and V for Value,
+	and a pointer to the next value.
+	This class defines a typical node of the Hash Table
+ */
 
 template < typename K, typename V > class HashNode 
 { public:
@@ -35,19 +20,45 @@ template < typename K, typename V > class HashNode
 	V value;
 	HashNode *next;
 
+	// HashNode Constructor
 	HashNode(K key, V value) : key(key), value(value), next(NULL) {}
+
+	// HashNode Deconstructor
 	~HashNode() {}
 };
+
+
+/*
+HashTable class:
+	Uses a template with the two K and V custom datatypes.
+	This class includes The following methods:
+		
+
+						┌┴─┐
+
+					┌──────────HashTable class─────────┐
+					|                                  |
+			     Methods                           __init__?
+					|
+		┌───────────┴───────────┐
+		|                 		|
+	 Queries     	   Modifying operators
+		|                       |
+	  Search             ┌──────┴──────┐
+	  				   insert        remove
+
+
+*/
 
 template < typename K, typename V > class HashTable
 { private:
 	int size;
 
-	// **table double pointer for indexing
 	HashNode < K, V > **table;
 
 public:
-	// Hash node has NULL hash nodes
+
+	// Constructor: Allocates memory creating [size] amount of empty hash nodes.
 	HashTable(int size) : size(size) 
 	{
 		table = new HashNode< K, V > *[size];
@@ -58,6 +69,7 @@ public:
 		} 
 	} 
 
+	// Deconstructor: Reallocates and frees allocated memory
 	~HashTable() 
 	{
 		for (int i; i < size; i++) 
@@ -87,6 +99,60 @@ public:
 		}
 		return index % size;
 	}
+
+    void insert(const K& key, const V& value) {
+        int index = hashFunc(key);
+        HashNode< K, V >* current = table[index];
+        
+        while (current != NULL) 
+        {
+            if (current->key == key) 
+            {
+                current->value = value;
+                return;
+            }
+            current = current->next;
+        }
+        HashNode< K, V >* newNode = new HashNode<K, V>(key, value);
+        newNode->next = table[index];
+        table[index] = newNode;
+    }
+
+	void remove(const K &key) {
+	    int index = hashFunction(key);
+
+	    HashNode<K, V> *prev = nullptr;
+	    HashNode<K, V> *node = table[index];
+
+	    while (node != nullptr && node->key != key) {
+	        prev = node;
+	        node = node->next;
+	    }
+
+	    if (node == nullptr) 
+	    {
+	        // The key is not present in the hash table
+	        return;
+	    } 
+
+	    else
+	    {
+	        
+	        if (prev == nullptr)
+	        {
+	            // The node with the given key is the head of the linked list
+	            table[index] = node->next;
+	        } 
+
+	        else
+	        {
+	            prev->next = node->next;
+	        }
+
+	        delete node;
+	    }
+	}
+
 
 	V search(const K &key)
 	{
