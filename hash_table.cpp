@@ -34,18 +34,16 @@ HashTable class:
 	This class includes The following methods:
 		
 
-						┌┴─┐
-
 					┌──────────HashTable class─────────┐
 					|                                  |
-			     Methods                           __init__?
-					|
-		┌───────────┴───────────┐
-		|                 		|
-	 Queries     	   Modifying operators
-		|                       |
-	  Search             ┌──────┴──────┐
-	  				   insert        remove
+			     Methods                          attributes
+					|                                  |
+		┌───────────┴───────────┐                   private
+		|                 		|                      |
+	 Queries     	   Modifying operators       ┌─────┴─────┐
+		|                       |               size      **table
+	Search()             ┌──────┴──────┐
+	  				 insert()        remove()
 
 
 */
@@ -76,9 +74,10 @@ public:
 		{
 			HashNode < K, V > *node = table[i];
 
-			while (node) {
+			while (node) 
+			{
 				HashNode < K, V > *prev = node;
-				node = node->next; // go to the next node in the linked list
+				node = node->next;
 				delete prev->value;
 				delete prev;
 			}
@@ -87,52 +86,85 @@ public:
 		delete[] table;
 	}
 
-	unsigned int hash(const K &key) 
-	{
-		unsigned char hash[SHA_DIGEST_LENGTH];
-		SHA1((unsigned char*)&key, sizeof(key), hash);
-		unsigned int index = 0;
 
-		for (int i=0; i < 4; i++)
-		{
-			index += hash[i] << (i * 8);
-		}
-		return index % size;
+	// Hash function using sha3-256: converts key to a hash(lines 94-102) and converts the hash to an index(lines 104-111).
+	template < typename K >
+	unsigned int h(const K& key) 
+	{
+	    std::stringstream ss;
+	    ss << key;
+	    std::string str = ss.str();
+    
+	    unsigned char hash[SHA256_DIGEST_LENGTH];
+	    SHA256_CTX sha256;
+	    SHA256_Init(&sha256);
+	    SHA256_Update(&sha256, str.c_str(), str.length());
+	    SHA256_Final(hash, &sha256);
+    
+	    unsigned int index = 0;
+	    
+	    for (int i = 0; i < 4; i++) 
+	    {
+	        index += hash[i] << (i * 8);
+	    }
+
+	    return index;
 	}
 
-    void insert(const K& key, const V& value) {
-        int index = hashFunc(key);
+	/*
+	The insert modifying operation(key, value):
+		# The following lines 124 to 137 exectes the following algorithm:
+		1. Create hash for the given key (line 127).
+		2. Search for an empty hash node with the [current] pointer (line 131).
+		3.1. If the key already exists, the value is inserted (lines 132-137). 
+		3.2. If the key does not exist, a new hash node is created where the value lies (lines 142-144).
+	*/
+
+    void append(const K& key, const V& value) {
+        int index = h(key);
         HashNode< K, V >* current = table[index];
         
-        while (current != NULL) 
+        while (current != nullptr) 
         {
             if (current->key == key) 
             {
                 current->value = value;
                 return;
             }
+
             current = current->next;
         }
+
         HashNode< K, V >* newNode = new HashNode<K, V>(key, value);
         newNode->next = table[index];
         table[index] = newNode;
     }
 
-	void remove(const K &key) {
-	    int index = hashFunction(key);
+	/*
+	The remove modifying operation(key, value):
+		# The following lines 153 to 183 exectes the following algorithm:
+		1. Create hash for the given key (line 153).
+		2. Loop through the table until given key is reached (lines 156-162).
+		3.1. if the node is a nullptr, it means the node has never existed(lines 165-168). 
+		3.2. If the key does not exist, a new hash node is created where the value lies (lines 142-144).
+	*/
 
-	    HashNode<K, V> *prev = nullptr;
-	    HashNode<K, V> *node = table[index];
+	void remove(const K &key) 
+	{
+	    int index = h(key);
 
-	    while (node != nullptr && node->key != key) {
+	    HashNode< K, V > *prev = nullptr;
+	    HashNode< K, V > *node = table[index];
+
+	    while (node != nullptr && node->key != key) 
+	    {
 	        prev = node;
 	        node = node->next;
 	    }
 
 	    if (node == nullptr) 
 	    {
-	        // The key is not present in the hash table
-	        return;
+	    	return;
 	    } 
 
 	    else
@@ -156,7 +188,7 @@ public:
 
 	V search(const K &key)
 	{
-		unsigned int index = hash(key);
+		unsigned int index = h(key);
 		HashNode < K, V > *node = table[index];
 
 		// search through the linked list
