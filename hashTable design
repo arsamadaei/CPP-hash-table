@@ -1,0 +1,20 @@
+Hash table design:
+	Key struct:
+		-> name
+		-> pointer to address
+		
+		
+	Hash node class <K, V>:
+		-> Value
+		-> Hash node pointer to next item (chaining resolution)
+
+		Hash node constructor: set Value,
+				       next pointer is set to null,
+				       a key is created with pointer to address of self
+		
+	Hash table class <K, V> :
+		Hash table constructor: allocates memory of type Hash node, 
+					create vector of type K that stores all keys inside,
+					
+					
+		Hash table deconstructor: reallocates memory 
