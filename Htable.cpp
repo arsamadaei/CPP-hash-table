@@ -14,10 +14,8 @@ int main() {
 	HashNode<string, int> yes("khar", true);
 	Htable <int, int> loob(10);
 	int ind = loob.h(30);
-	ind = abs(ind);
 	no.kupdate("asghar");
 
-	cout << endl << no._key.name << endl << "Hash:" << ind << endl;
-	cout << "build success\n";
+	//cout << endl << no._key.name << endl << loob.h(30);
 	return 0;
 }
