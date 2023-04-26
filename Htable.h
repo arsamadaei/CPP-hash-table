@@ -11,14 +11,10 @@
 
 using namespace std;
 
-unsigned int sigmoid(unsigned int x) {
-	return 	1 / (1 + exp(-x));
-}
-
-// experiment library namespace
-//compilation code: g++ -g Htable.cpp -Wno-deprecated-declarations -o Htable -lssl -lcrypto
 
 namespace exl {
+	// experiment library namespace
+	//compilation code: g++ -g Htable.cpp -Wno-deprecated-declarations -o Htable -lssl -lcrypto
 
 
 template < typename K, typename V >
@@ -29,8 +25,6 @@ struct key {
 
 template < typename K, typename V >
 class HashNode {
-private:
-	V value_private;
 public:
 	bool _public;
 	V value_public;
@@ -38,7 +32,7 @@ public:
 
 	key < K, HashNode <K, V> > _key;
 
-	HashNode(K n, bool public_=true): value_public(value_public), value_private(value_private), next(nullptr), _public(public_){
+	HashNode(K n): value_public(value_public), next(nullptr) {
 		_key.name = n;
 		_key.vptr = this;
 	}
@@ -56,8 +50,7 @@ public:
 
 	void vupdate(V value_ = {}) {
 		if (value_ != V{}) {
-			if(_public) { value_private = value_; }
-			else { value_public = value_; }
+			value_public = value_;
 		}
 	}
 
@@ -69,9 +62,6 @@ public:
 
 template < typename K, typename V >
 class Htable {
-private:
-	int size_private;
-	HashNode < K, V > **linkedList_private;
 
 public:
 	bool _public;
@@ -80,28 +70,22 @@ public:
 	HashNode < K, V > **linkedList_public;
 
 	// Hash table constructor
-	Htable(int _size, bool public_=true): size_public(_size), size_private(size_private), _public(public_) {
+	Htable(int _size): size_public(_size) {
+		
 		// allocate memory with size _size(collision resolution type: chaining)
-
-		if (!_public) { linkedList_private = new HashNode < K , V > *[size_private]; }
-		else { linkedList_public = new HashNode < K , V > *[size_public]; }
-
+	
+		linkedList_public = new HashNode < K , V > *[size_public];
+		
 		for (int i; i < _size; i++) {
-			if (!_public) {
-				linkedList_private[i] = NULL;
-				size_private = _public;
-			}
-
-			else {
-				linkedList_public[i] = NULL;
-				size_public = _size;
-			}
+			linkedList_public[i] = NULL;
+			size_public = _size;
 		}
 
 		cout << "size " << _size;
 		cout << "sids " << size_public;
 		cout << endl << typeid(Htable).name() << " memory allocated successfully\n";
 	}
+
 
 	// query operations:
 	template < typename Key >
@@ -128,24 +112,20 @@ public:
 
 
 		cout << index;
-		index = static_cast< int > (size_public * (1 / (1 + exp(-(index / 10e10)))) + 1);
-		cout << endl << "epijwpifpweifjqweqweqpiwejfp :  :" <<  index;
-		cout << "qwep";
+		
+		// return a sigmoid of the index. returns values between 0 and size_public - 1
+		index = static_cast< int > ((size_public - 1) * (1 / (1 + exp(-(index / 10e10)))));
 		return index;
 	}
+	
 
 	~Htable() {
 		int size;
-		if(_public) { size = size_public; }
-		else { size = size_private; }
 
 		for (int i; i < size; i++)
 			{
 				HashNode < K, V > **linkedList;
-
-				if (!_public) { linkedList = linkedList_private; }
-				else { linkedList = linkedList_public; }
-
+				linkedList = linkedList_public;
 				HashNode < K, V > *node = linkedList[i];
 
 				while (node)
@@ -157,7 +137,6 @@ public:
 			}
 
 		delete[] linkedList_public;
-		delete[] linkedList_private;
 
 		cout << endl << typeid(Htable).name() << " memory successfuly reallocated\n";
 	}

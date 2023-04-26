@@ -10,8 +10,8 @@ using namespace std;
 using namespace exl;
 
 int main() {
-	HashNode<string, int> no("asb", true);
-	HashNode<string, int> yes("khar", true);
+	HashNode<string, int> no("asb");
+	HashNode<string, int> yes("khar");
 	Htable <int, int> loob(10);
 	int ind = loob.h(30);
 	no.kupdate("asghar");
