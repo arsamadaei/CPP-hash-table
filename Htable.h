@@ -16,26 +16,14 @@ namespace exl {
 	// experiment library namespace
 	//compilation code: g++ -g Htable.cpp -Wno-deprecated-declarations -o Htable -lssl -lcrypto
 
-
-template < typename K, typename V >
-struct key {
-	K name;
-	V* vptr; // pointer to value
-};
-
 template < typename K, typename V >
 class HashNode {
 public:
-	bool _public;
-	V value_public;
+	K key;
+	V value;
 	HashNode* next;
 
-	key < K, HashNode <K, V> > _key;
-
-	HashNode(K n): value_public(value_public), next(nullptr) {
-		_key.name = n;
-		_key.vptr = this;
-	}
+	HashNode(K key, V value): key(key), value(value), next(nullptr) {}
 
 
 	// modifying operations:
@@ -43,14 +31,14 @@ public:
 
 	void kupdate(K key_ = {}) {
 		if (!key_.empty()) {
-			_key.name = key_;
+			key = key_;
 		}
 	}
 
 
 	void vupdate(V value_ = {}) {
 		if (value_ != V{}) {
-			value_public = value_;
+			value = value_;
 		}
 	}
 
@@ -65,31 +53,29 @@ class Htable {
 
 public:
 	bool _public;
-	int size_public;
+	int size;
 
-	HashNode < K, V > **linkedList_public;
+	HashNode < K, V > **linkedList;
 
 	// Hash table constructor
-	Htable(int _size): size_public(_size) {
-		
+	Htable(int _size): size(_size) {
+
 		// allocate memory with size _size(collision resolution type: chaining)
-	
-		linkedList_public = new HashNode < K , V > *[size_public];
-		
+
+		linkedList = new HashNode < K , V > *[size];
+
 		for (int i; i < _size; i++) {
-			linkedList_public[i] = NULL;
-			size_public = _size;
+			linkedList[i] = NULL;
+			size = _size;
 		}
 
-		cout << "size " << _size;
-		cout << "sids " << size_public;
 		cout << endl << typeid(Htable).name() << " memory allocated successfully\n";
 	}
 
 
 	// query operations:
 	template < typename Key >
-	int h(const Key& key)
+	unsigned int h(const Key& key)
 	{
 	    stringstream ss;
 	    ss << key;
@@ -108,16 +94,48 @@ public:
 	        index += hash[i] << (i * 8);
 	    }
 
-		unsigned int size_ = static_cast< unsigned int > (size_public);
+		unsigned int size_ = static_cast< unsigned int > (size);
 
-
-		cout << index;
-		
 		// return a sigmoid of the index. returns values between 0 and size_public - 1
-		index = static_cast< int > ((size_public - 1) * (1 / (1 + exp(-(index / 10e10)))));
+		index = static_cast< unsigned int > ((size - 1) * (1 / (1 + exp(-(index / 10e10)))));
 		return index;
 	}
-	
+
+	void append(const K& key_, const V& value_) {
+		unsigned int index = h(key_);
+		HashNode< K, V >* current = linkedList[index];
+
+		while (current != nullptr) {
+
+			// see if the same value with the same key already exists
+			if ((current->key == key_) && (current->value == value_)) {
+				return;
+			}
+
+			current = current->next;
+		}
+
+		HashNode< K, V >* newNode = new HashNode< K, V >(key_, value_);
+		newNode->next = linkedList[index];
+		linkedList[index] = newNode;
+	}
+
+
+	V& operator[] (K key_) {
+		unsigned int index = h(key_);
+		HashNode< K, V > *node = linkedList[index];
+
+		while (node)
+		{
+			if (node->key == key_) {
+				return node->value;
+			}
+
+			node = node->next;
+		}
+
+		throw out_of_range("Key not found in table.");
+	}
 
 	~Htable() {
 		int size;
@@ -125,7 +143,7 @@ public:
 		for (int i; i < size; i++)
 			{
 				HashNode < K, V > **linkedList;
-				linkedList = linkedList_public;
+				linkedList = linkedList;
 				HashNode < K, V > *node = linkedList[i];
 
 				while (node)
@@ -136,7 +154,7 @@ public:
 				}
 			}
 
-		delete[] linkedList_public;
+		delete[] linkedList;
 
 		cout << endl << typeid(Htable).name() << " memory successfuly reallocated\n";
 	}
