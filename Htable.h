@@ -1,23 +1,34 @@
-#ifndef HTABLE_H
-#define HTABLE_H
+#ifndef _GLIBCXX_HTABLE_H
+#define _GLIBCXX_HTABLE_H 1
 
+#pragma GCC system_header
+
+#ifndef __GXX_EXPERIMENTAL_CXX0X__
+#include <bits/c++0x_warning.h>
+#else
+
+#include <bits/stl_algobase.h>
+#include <bits/range_access.h>
 #include <iostream>
 #include <ios>
 #include <cstdint>
 #include <cstring>
 #include <sstream>
 #include <cmath>
+#include <vector>
 #include <openssl/sha.h>
-
 using namespace std;
 
 
-namespace exl {
+namespace exl _GLIBCXX_VISIBILITY (default){
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 	// experiment library namespace
 	//compilation code: g++ -g Htable.cpp -Wno-deprecated-declarations -o Htable -lssl -lcrypto
+	//g++ -o my_program my_program.cpp -lssl -lcrypto
 
 template < typename K, typename V >
 class HashNode {
+
 public:
 	K key;
 	V value;
@@ -50,11 +61,11 @@ public:
 
 template < typename K, typename V >
 class Htable {
+private:
+	int size;
+	vector<K> _keys;
 
 public:
-	bool _public;
-	int size;
-
 	HashNode < K, V > **linkedList;
 
 	// Hash table constructor
@@ -101,7 +112,17 @@ public:
 		return index;
 	}
 
-	void append(const K& key_, const V& value_) {
+	int
+	len()
+	{ return size; }
+
+	vector<K>
+	keys()
+	{return _keys;}
+
+	void
+	append(const K& key_, const V& value_)
+	{
 		unsigned int index = h(key_);
 		HashNode< K, V >* current = linkedList[index];
 
@@ -118,10 +139,63 @@ public:
 		HashNode< K, V >* newNode = new HashNode< K, V >(key_, value_);
 		newNode->next = linkedList[index];
 		linkedList[index] = newNode;
+		_keys.push_back(key_);
+	}
+
+	void
+	remove(const K &key)
+	{
+		int index = h(key);
+
+		HashNode< K, V > *prev = nullptr;
+		HashNode< K, V > *node = linkedList[index];
+
+		while (node != nullptr && node->key != key)
+		{
+			prev = node;
+			node = node->next;
+		}
+
+		if (node == nullptr)
+		{
+			return;
+		}
+
+		else
+		{
+			if (prev == nullptr)
+			{
+				// The node with the given key is the head of the linked list
+				linkedList[index] = node->next;
+			}
+
+			else
+			{
+				int index_to_remove = -1;
+
+				// Find the index of the element to remove
+				for (int i = 0; i < _keys.size(); i++) {
+					if (_keys[i] == key) {
+						index_to_remove = i;
+						break;
+					}
+				}
+
+				// If the element was found, remove it from the vector
+				if (index_to_remove != -1) {
+					_keys.erase(_keys.begin() + index_to_remove);
+				}
+				prev->next = node->next;
+			}
+
+			delete node;
+		}
+
+
 	}
 
 
-	V& operator[] (K key_) {
+	const V& operator[] (const K& key_) const {
 		unsigned int index = h(key_);
 		HashNode< K, V > *node = linkedList[index];
 
@@ -134,7 +208,27 @@ public:
 			node = node->next;
 		}
 
-		throw out_of_range("Key not found in table.");
+		throw std::out_of_range(std::string("Index out of range. ")
+		        + __FILE__ + ":" + std::to_string(__LINE__));
+	}
+
+
+	V&
+	operator[] (const K& key_)
+	 {
+		unsigned int index = h(key_);
+		HashNode< K, V > *node = linkedList[index];
+		while (node)
+		{
+			if (node->key == key_) {
+				return node->value;
+			}
+
+			node = node->next;
+		}
+
+		throw std::out_of_range(std::string("Index out of range. ")
+		        + __FILE__ + ":" + std::to_string(__LINE__));
 	}
 
 	~Htable() {
@@ -158,8 +252,20 @@ public:
 
 		cout << endl << typeid(Htable).name() << " memory successfuly reallocated\n";
 	}
+
+
+	void
+	push(int amount)
+	{
+
+		size += amount;
+	}
+
 };
 
+
+_GLIBCXX_END_NAMESPACE_VERSION
 }
 
-#endif
+#endif // __GXX_EXPERIMENTAL_CXX0X__
+#endif // _GLIBCXX_HTABLE_H
